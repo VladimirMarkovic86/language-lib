@@ -9,6 +9,7 @@
                  [org.vladimir/session-lib "0.1.0"]
                  [org.clojure/clojurescript "1.10.339"]
                  [org.vladimir/ajax-lib "0.1.0"]
+                 [org.vladimir/common-middle "0.1.0"]
                  ]
   :source-paths ["src/clj" "src/cljs"])
 

@@ -1,5 +1,6 @@
 (ns language-lib.core
-  (:require [ajax-lib.core :refer [sjax get-response]]))
+  (:require [ajax-lib.core :refer [sjax get-response]]
+            [common-middle.request-urls :as rurls]))
 
 (def default-language
      (atom :english))
@@ -12,7 +13,7 @@
   []
   (if (empty? @cached-labels)
     (let [xhr (sjax
-                {:url "/clojure/get-labels"})
+                {:url rurls/get-labels-url})
           response (get-response
                      xhr)
           language (:language response)
