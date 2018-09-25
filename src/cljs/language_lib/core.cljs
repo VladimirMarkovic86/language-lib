@@ -9,7 +9,7 @@
      (atom []))
 
 (defn read-all-labels
-  ""
+  "Read all labels if cached-labels is empty"
   []
   (if (empty? @cached-labels)
     (let [xhr (sjax
@@ -27,7 +27,7 @@
     @cached-labels))
 
 (defn get-label-recur
-  ""
+  "Get label for chosen language by it's code recursion"
   [code
    language
    index]
@@ -52,7 +52,7 @@
     code))
 
 (defn get-label
-  ""
+  "Get label for chosen language by it's code"
   [code
    & [language]]
   (read-all-labels)

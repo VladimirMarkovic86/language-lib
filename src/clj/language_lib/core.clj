@@ -7,7 +7,7 @@
             [ajax-lib.http.status-code :as stc]))
 
 (defn get-preferences
-  ""
+  "Fetch preferences for logged in user"
   [session-cookie
    session-type]
   (when-let [session (ssn/get-cookie
@@ -24,7 +24,7 @@
    ))
 
 (defn get-labels
-  ""
+  "Read labels for chosen language"
   [request]
   (let [language (atom :english)]
     (when-let [session-cookie (:cookie request)]
@@ -70,7 +70,7 @@
    ))
 
 (defn set-language
-  ""
+  "Set default language for logged in user"
   [request
    request-body]
   (let [language (name
