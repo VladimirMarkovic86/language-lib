@@ -1,6 +1,6 @@
 (ns language-lib.core
   (:require [session-lib.core :as ssn]
-            [mongo-lib.core :as mon]
+            [db-lib.core :as db]
             [dao-lib.core :as dao]
             [ajax-lib.http.entity-header :as eh]
             [ajax-lib.http.mime-type :as mt]
@@ -14,10 +14,10 @@
                        session-cookie
                        session-type)]
     (when-let [user-id (:user-id
-                         (mon/mongodb-find-one
+                         (db/find-one-by-filter
                            (name session-type)
                            {:uuid session}))]
-      (when-let [preferences (mon/mongodb-find-one
+      (when-let [preferences (db/find-one-by-filter
                                "preferences"
                                {:user-id user-id})]
         preferences))
@@ -33,31 +33,25 @@
                                :long-session)]
         (reset!
           language
-          (keyword
-            (:language preferences))
-         ))
+          (:language preferences))
+       )
       (when-let [preferences (get-preferences
                                session-cookie
                                :session)]
         (reset!
           language
-          (keyword
-            (:language preferences))
-         ))
-     )
+          (:language preferences))
+       ))
     (let [entity-type "language"
           entity-filter {}
           projection-vector [:code @language]
           projection-include true
-          projection (dao/build-projection
-                       projection-vector
-                       projection-include)
           qsort {:code 1}
           collation {:locale "sr"}
-          db-result (mon/mongodb-find
+          db-result (db/find-by-filter
                       entity-type
                       entity-filter
-                      projection
+                      projection-vector
                       qsort
                       0
                       0
@@ -73,14 +67,13 @@
   "Set default language for logged in user"
   [request
    request-body]
-  (let [language (name
-                   (:language request-body))
+  (let [language (:language request-body)
         language-name (:language-name request-body)]
     (when-let [session-cookie (:cookie request)]
       (when-let [preferences (get-preferences
                                session-cookie
                                :long-session)]
-        (mon/mongodb-update-by-id
+        (db/update-by-id
           "preferences"
           (:_id preferences)
           {:language language
@@ -88,7 +81,7 @@
       (when-let [preferences (get-preferences
                                session-cookie
                                :session)]
-        (mon/mongodb-update-by-id
+        (db/update-by-id
           "preferences"
           (:_id preferences)
           {:language language
