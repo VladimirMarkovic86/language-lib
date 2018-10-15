@@ -30,7 +30,7 @@
     (when-let [session-cookie (:cookie request)]
       (when-let [preferences (get-preferences
                                session-cookie
-                               :long-session)]
+                               :long_session)]
         (reset!
           language
           (:language preferences))
@@ -72,7 +72,7 @@
     (when-let [session-cookie (:cookie request)]
       (when-let [preferences (get-preferences
                                session-cookie
-                               :long-session)]
+                               :long_session)]
         (db/update-by-id
           "preferences"
           (:_id preferences)
