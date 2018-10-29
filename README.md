@@ -1,36 +1,19 @@
 # Language library
 
-Language library
+Language library is clojure/script project that implements multilingual label mechanism. It is ment to be used with server-lib, common- (client, middle and server) projects.
 
-## Installation
+### Installing
 
-Download from http://gitlab:1610/VladimirMarkovic86/language-lib.
+You can use this project as dependencie in clojure projects by listing it in project.clj
 
-## Usage
+```
+[org.clojars.vladimirmarkovic86/language-lib "0.2.0"]
+```
 
-FIXME: explanation
+## Authors
 
-    $ java -jar server-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
+* **Vladimir Markovic** - [VladimirMarkovic86](https://github.com/VladimirMarkovic86)
 
 ## License
 
-Copyright © 2017 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+This project is licensed under the Eclipse Public License 1.0 - see the [LICENSE](LICENSE) file for details
