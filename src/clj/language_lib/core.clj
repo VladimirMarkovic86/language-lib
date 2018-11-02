@@ -4,7 +4,9 @@
             [dao-lib.core :as dao]
             [ajax-lib.http.entity-header :as eh]
             [ajax-lib.http.mime-type :as mt]
-            [ajax-lib.http.status-code :as stc]))
+            [ajax-lib.http.status-code :as stc]
+            [common-middle.collection-names :refer [language-cname
+                                                    preferences-cname]]))
 
 (defn get-preferences
   "Fetch preferences for logged in user"
@@ -18,7 +20,7 @@
                            (name session-type)
                            {:uuid session}))]
       (when-let [preferences (mon/mongodb-find-one
-                               "preferences"
+                               preferences-cname
                                {:user-id user-id})]
         preferences))
    ))
@@ -45,7 +47,7 @@
             (:language preferences))
          ))
      )
-    (let [entity-type "language"
+    (let [entity-type language-cname
           entity-filter {}
           projection-vector [:code @language]
           projection-include true
@@ -81,7 +83,7 @@
                                session-cookie
                                :long-session)]
         (mon/mongodb-update-by-id
-          "preferences"
+          preferences-cname
           (:_id preferences)
           {:language language
            :language-name language-name}))
@@ -89,7 +91,7 @@
                                session-cookie
                                :session)]
         (mon/mongodb-update-by-id
-          "preferences"
+          preferences-cname
           (:_id preferences)
           {:language language
            :language-name language-name}))
