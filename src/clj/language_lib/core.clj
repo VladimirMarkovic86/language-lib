@@ -5,48 +5,118 @@
             [ajax-lib.http.entity-header :as eh]
             [ajax-lib.http.mime-type :as mt]
             [ajax-lib.http.status-code :as stc]
+            [clojure.string :as cstring]
+            [clojure.set :as cset]
             [common-middle.collection-names :refer [language-cname
                                                     preferences-cname]]))
+
+(defn get-user-id-by-session
+  "Returns user's id using session cookie"
+  [session-cookie
+   & [session-type]]
+  (if session-type
+    (when-let [uuid (ssn/get-cookie
+                      session-cookie
+                      session-type)]
+      (:user-id
+        (mon/mongodb-find-one
+          (name session-type)
+          {:uuid uuid}))
+     )
+    (if-let [uuid (ssn/get-cookie
+                    session-cookie
+                    :long-session)]
+      (:user-id
+        (mon/mongodb-find-one
+          "long-session"
+          {:uuid uuid}))
+      (when-let [uuid (ssn/get-cookie
+                        session-cookie
+                        :session)]
+        (:user-id
+          (mon/mongodb-find-one
+            "session"
+            {:uuid uuid}))
+       ))
+   ))
 
 (defn get-preferences
   "Fetch preferences for logged in user"
   [session-cookie
    session-type]
-  (when-let [session (ssn/get-cookie
+  (when-let [user-id (get-user-id-by-session
                        session-cookie
                        session-type)]
-    (when-let [user-id (:user-id
-                         (mon/mongodb-find-one
-                           (name session-type)
-                           {:uuid session}))]
-      (when-let [preferences (mon/mongodb-find-one
-                               preferences-cname
-                               {:user-id user-id})]
-        preferences))
-   ))
+    (when-let [preferences (mon/mongodb-find-one
+                             preferences-cname
+                             {:user-id user-id})]
+      preferences))
+  )
+
+(defn get-accept-language
+  "Read accept-language header for selected language"
+  [request]
+  (let [accept-language (:accept-language request)]
+    (if accept-language
+      (let [language-vector (cstring/split
+                              accept-language
+                              #",")
+            first-choice-language (if (cstring/index-of
+                                        (first
+                                          language-vector)
+                                        "sr")
+                                    "sr"
+                                    (when (cstring/index-of
+                                            (first
+                                              language-vector)
+                                            "en")
+                                      "en"))
+            selected-language (if first-choice-language
+                                first-choice-language
+                                (let [language-set (into
+                                                     #{}
+                                                     language-vector)
+                                      selected-language (cset/select
+                                                          (fn [elem]
+                                                            (cstring/index-of
+                                                              elem
+                                                              "sr"))
+                                                            language-set)
+                                      selected-language (if (empty?
+                                                              selected-language)
+                                                          "en"
+                                                          (first
+                                                            selected-language))]
+                                  selected-language))]
+        (if (cstring/index-of
+              selected-language
+              "sr")
+          "serbian"
+          "english"))
+      "english"))
+ )
 
 (defn get-labels
   "Read labels for chosen language"
   [request]
-  (let [language (atom :english)]
+  (let [language (atom
+                   (get-accept-language
+                     request))]
     (when-let [session-cookie (:cookie request)]
       (when-let [preferences (get-preferences
                                session-cookie
                                :long-session)]
         (reset!
           language
-          (keyword
-            (:language preferences))
-         ))
+          (:language preferences))
+       )
       (when-let [preferences (get-preferences
                                session-cookie
                                :session)]
         (reset!
           language
-          (keyword
-            (:language preferences))
-         ))
-     )
+          (:language preferences))
+       ))
     (let [entity-type language-cname
           entity-filter {}
           projection-vector [:code @language]
@@ -75,26 +145,48 @@
   "Set default language for logged in user"
   [request
    request-body]
-  (let [language (name
-                   (:language request-body))
+  (let [language (:language request-body)
         language-name (:language-name request-body)]
     (when-let [session-cookie (:cookie request)]
-      (when-let [preferences (get-preferences
-                               session-cookie
-                               :long-session)]
-        (mon/mongodb-update-by-id
-          preferences-cname
-          (:_id preferences)
-          {:language language
-           :language-name language-name}))
-      (when-let [preferences (get-preferences
-                               session-cookie
-                               :session)]
-        (mon/mongodb-update-by-id
-          preferences-cname
-          (:_id preferences)
-          {:language language
-           :language-name language-name}))
+      (let [preferences (get-preferences
+                          session-cookie
+                          :long-session)]
+        (if (and preferences
+                 (map?
+                   preferences)
+                 (not
+                   (empty?
+                     preferences))
+             )
+          (mon/mongodb-update-by-id
+            preferences-cname
+            (:_id preferences)
+            {:language language
+             :language-name language-name})
+          (let [preferences (get-preferences
+                              session-cookie
+                              :session)]
+            (if (and preferences
+                     (map?
+                       preferences)
+                     (not
+                       (empty?
+                         preferences))
+                 )
+              (mon/mongodb-update-by-id
+                preferences-cname
+                (:_id preferences)
+                {:language language
+                 :language-name language-name})
+              (when-let [user-id-by-session (get-user-id-by-session
+                                              session-cookie)]
+                (mon/mongodb-insert-one
+                  preferences-cname
+                  {:user-id user-id-by-session
+                   :language language
+                   :language-name language-name}))
+             ))
+         ))
      )
     {:status (stc/ok)
      :headers {(eh/content-type) (mt/text-plain)}

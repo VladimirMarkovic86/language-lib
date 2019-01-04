@@ -3,7 +3,7 @@
             [common-middle.request-urls :as rurls]))
 
 (def default-language
-     (atom :english))
+     (atom "english"))
 
 (def cached-labels
      (atom []))
@@ -30,6 +30,7 @@
   "Get label for chosen language by it's code recursion"
   [code
    language
+   parameters
    index]
   (if (< index
          (count
@@ -41,23 +42,54 @@
              code)
         (if-let [cached-translation (get
                                       cached-label
-                                      language)]
-          cached-translation
+                                      (keyword
+                                        language))]
+          (if parameters
+            (if (vector?
+                  parameters)
+             (let [replaced-parameters (atom cached-translation)]
+               (doseq [index (range
+                               (count
+                                 parameters))]
+                 (swap!
+                   replaced-parameters
+                   (fn [a-val
+                        param-value]
+                     (.replace
+                       a-val
+                       (str
+                         "$"
+                         index)
+                       param-value))
+                   (get
+                     parameters
+                     index))
+                )
+               @replaced-parameters)
+             (.replace
+               cached-translation
+               "$0"
+               parameters))
+            cached-translation)
           code)
         (recur
           code
           language
-          (inc index))
+          parameters
+          (inc
+            index))
        ))
     code))
 
 (defn get-label
   "Get label for chosen language by it's code"
   [code
-   & [language]]
+   & [language
+      parameters]]
   (read-all-labels)
   (get-label-recur
     code
     @default-language
+    parameters
     0))
 
