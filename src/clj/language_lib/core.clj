@@ -5,8 +5,6 @@
             [ajax-lib.http.entity-header :as eh]
             [ajax-lib.http.mime-type :as mt]
             [ajax-lib.http.status-code :as stc]
-            [clojure.string :as cstring]
-            [clojure.set :as cset]
             [common-middle.collection-names :refer [language-cname
                                                     preferences-cname]]))
 
@@ -53,54 +51,11 @@
       preferences))
   )
 
-(defn get-accept-language
-  "Read accept-language header for selected language"
-  [request]
-  (let [accept-language (:accept-language request)]
-    (if accept-language
-      (let [language-vector (cstring/split
-                              accept-language
-                              #",")
-            first-choice-language (if (cstring/index-of
-                                        (first
-                                          language-vector)
-                                        "sr")
-                                    "sr"
-                                    (when (cstring/index-of
-                                            (first
-                                              language-vector)
-                                            "en")
-                                      "en"))
-            selected-language (if first-choice-language
-                                first-choice-language
-                                (let [language-set (into
-                                                     #{}
-                                                     language-vector)
-                                      selected-language (cset/select
-                                                          (fn [elem]
-                                                            (cstring/index-of
-                                                              elem
-                                                              "sr"))
-                                                            language-set)
-                                      selected-language (if (empty?
-                                                              selected-language)
-                                                          "en"
-                                                          (first
-                                                            selected-language))]
-                                  selected-language))]
-        (if (cstring/index-of
-              selected-language
-              "sr")
-          "serbian"
-          "english"))
-      "english"))
- )
-
 (defn get-labels
   "Read labels for chosen language"
   [request]
   (let [language (atom
-                   (get-accept-language
+                   (ssn/get-accept-language
                      request))]
     (when-let [session-cookie (:cookie request)]
       (when-let [preferences (get-preferences
