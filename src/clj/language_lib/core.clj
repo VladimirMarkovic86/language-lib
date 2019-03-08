@@ -2,6 +2,7 @@
   (:require [session-lib.core :as ssn]
             [mongo-lib.core :as mon]
             [dao-lib.core :as dao]
+            [utils-lib.core :refer [parse-body]]
             [ajax-lib.http.entity-header :as eh]
             [ajax-lib.http.mime-type :as mt]
             [ajax-lib.http.status-code :as stc]
@@ -98,9 +99,10 @@
 
 (defn set-language
   "Set default language for logged in user"
-  [request
-   request-body]
-  (let [language (:language request-body)
+  [request]
+  (let [request-body (parse-body
+                       request)
+        language (:language request-body)
         language-name (:language-name request-body)]
     (when-let [session-cookie (:cookie request)]
       (let [preferences (get-preferences
