@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojars.vladimirmarkovic86/mongo-lib "0.2.4"]
                  [org.clojars.vladimirmarkovic86/dao-lib "0.3.9"]
-                 [org.clojars.vladimirmarkovic86/session-lib "0.2.12"]
+                 [org.clojars.vladimirmarkovic86/session-lib "0.2.13"]
                  [org.clojure/clojurescript "1.10.339"]
                  [org.clojars.vladimirmarkovic86/ajax-lib "0.1.8"]
                  [org.clojars.vladimirmarkovic86/common-middle "0.2.5"]
