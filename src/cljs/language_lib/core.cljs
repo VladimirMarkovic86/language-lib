@@ -11,7 +11,8 @@
 (defn read-all-labels
   "Read all labels if cached-labels is empty"
   []
-  (if (empty? @cached-labels)
+  (if (empty?
+        @cached-labels)
     (let [xhr (sjax
                 {:url rurls/get-labels-url})
           response (get-response

@@ -2,7 +2,6 @@
   (:require [session-lib.core :as ssn]
             [mongo-lib.core :as mon]
             [dao-lib.core :as dao]
-            [utils-lib.core :refer [parse-body]]
             [ajax-lib.http.entity-header :as eh]
             [ajax-lib.http.mime-type :as mt]
             [ajax-lib.http.status-code :as stc]
@@ -91,16 +90,16 @@
                       0
                       collation)]
       {:status (stc/ok)
-       :headers {(eh/content-type) (mt/text-plain)}
-       :body (str {:status "success"
-                   :language @language
-                   :data db-result})})
+       :headers {(eh/content-type) (mt/text-clojurescript)}
+       :body {:status "success"
+              :language @language
+              :data db-result}})
    ))
 
 (defn set-language
   "Set default language for logged in user"
   [request]
-  (let [request-body (parse-body
+  (let [request-body (:body
                        request)
         language (:language request-body)
         language-name (:language-name request-body)]
@@ -146,7 +145,6 @@
          ))
      )
     {:status (stc/ok)
-     :headers {(eh/content-type) (mt/text-plain)}
-     :body (str {:status "success"})})
- )
+     :headers {(eh/content-type) (mt/text-clojurescript)}
+     :body {:status "success"}}))
 
