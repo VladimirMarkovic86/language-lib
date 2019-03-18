@@ -1,4 +1,4 @@
-(defproject org.clojars.vladimirmarkovic86/language-lib "0.2.15"
+(defproject org.clojars.vladimirmarkovic86/language-lib "0.2.16"
   :description "Language library"
   :url "http://github.com/VladimirMarkovic86/language-lib"
   :license {:name "Eclipse Public License"
