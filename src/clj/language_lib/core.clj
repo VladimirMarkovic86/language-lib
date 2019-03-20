@@ -99,52 +99,64 @@
 (defn set-language
   "Set default language for logged in user"
   [request]
-  (let [request-body (:body
-                       request)
-        language (:language request-body)
-        language-name (:language-name request-body)]
-    (when-let [session-cookie (:cookie request)]
-      (let [preferences (get-preferences
-                          session-cookie
-                          :long-session)]
-        (if (and preferences
-                 (map?
-                   preferences)
-                 (not
-                   (empty?
-                     preferences))
-             )
-          (mon/mongodb-update-by-id
-            preferences-cname
-            (:_id preferences)
-            {:language language
-             :language-name language-name})
-          (let [preferences (get-preferences
-                              session-cookie
-                              :session)]
-            (if (and preferences
-                     (map?
-                       preferences)
-                     (not
-                       (empty?
-                         preferences))
-                 )
-              (mon/mongodb-update-by-id
-                preferences-cname
-                (:_id preferences)
-                {:language language
-                 :language-name language-name})
-              (when-let [user-id-by-session (get-user-id-by-session
-                                              session-cookie)]
-                (mon/mongodb-insert-one
+  (try
+    (let [request-body (:body
+                         request)
+          language (:language request-body)
+          language-name (:language-name request-body)]
+      (when-let [session-cookie (:cookie request)]
+        (let [preferences (get-preferences
+                            session-cookie
+                            :long-session)]
+          (if (and preferences
+                   (map?
+                     preferences)
+                   (not
+                     (empty?
+                       preferences))
+               )
+            (mon/mongodb-update-by-id
+              preferences-cname
+              (:_id preferences)
+              {:language language
+               :language-name language-name})
+            (let [preferences (get-preferences
+                                session-cookie
+                                :session)]
+              (if (and preferences
+                       (map?
+                         preferences)
+                       (not
+                         (empty?
+                           preferences))
+                   )
+                (mon/mongodb-update-by-id
                   preferences-cname
-                  {:user-id user-id-by-session
-                   :language language
-                   :language-name language-name}))
-             ))
-         ))
-     )
-    {:status (stc/ok)
-     :headers {(eh/content-type) (mt/text-clojurescript)}
-     :body {:status "success"}}))
+                  (:_id preferences)
+                  {:language language
+                   :language-name language-name})
+                (when-let [user-id-by-session (get-user-id-by-session
+                                                session-cookie)]
+                  (mon/mongodb-insert-one
+                    preferences-cname
+                    {:user-id user-id-by-session
+                     :language language
+                     :language-name language-name}))
+               ))
+           ))
+       )
+      {:status (stc/ok)
+       :headers {(eh/content-type) (mt/text-clojurescript)}
+       :body {:status "success"}})
+    (catch Exception e
+      (println
+        (.getMessage
+          e))
+      {:status (stc/internal-server-error)
+       :headers {(eh/content-type) (mt/text-clojurescript)}
+       :body {:status "Error"
+              :message (.getMessage
+                         e)}})
+   )
+  )
 
