@@ -96,6 +96,30 @@
               :data db-result}})
    ))
 
+(defn get-label
+  "Gets label by label code and language"
+  [label-code
+   & [label-language]]
+  (when (and label-code
+             (number?
+               label-code))
+    (let [entity-type language-cname
+          entity-filter {:code label-code}
+          label-language (or label-language
+                             :english)
+          label-language (keyword
+                           label-language)
+          projection {:_id 0
+                      label-language 1}
+          db-result (mon/mongodb-find-one
+                      entity-type
+                      entity-filter
+                      projection)]
+      (get
+        db-result
+        label-language))
+   ))
+
 (defn set-language
   "Set default language for logged in user"
   [request]
