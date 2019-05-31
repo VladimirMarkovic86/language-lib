@@ -115,10 +115,13 @@
                       entity-type
                       entity-filter
                       projection)]
-      (get
-        db-result
-        label-language))
-   ))
+      (or (get
+            db-result
+            label-language)
+          (str
+            label-code))
+     ))
+ )
 
 (defn set-language
   "Set default language for logged in user"
