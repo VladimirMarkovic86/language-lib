@@ -18,25 +18,30 @@
                       session-type)]
       (:user-id
         (mon/mongodb-find-one
-          (name session-type)
+          (name
+            session-type)
           {:uuid uuid}))
      )
-    (if-let [uuid (ssn/get-cookie
-                    session-cookie
-                    :long-session)]
-      (:user-id
-        (mon/mongodb-find-one
-          "long-session"
-          {:uuid uuid}))
-      (when-let [uuid (ssn/get-cookie
-                        session-cookie
-                        :session)]
+    (when (and session-cookie
+               (string?
+                 session-cookie))
+      (if-let [uuid (ssn/get-cookie
+                      session-cookie
+                      :long-session)]
         (:user-id
           (mon/mongodb-find-one
-            "session"
+            "long-session"
             {:uuid uuid}))
-       ))
-   ))
+        (when-let [uuid (ssn/get-cookie
+                          session-cookie
+                          :session)]
+          (:user-id
+            (mon/mongodb-find-one
+              "session"
+              {:uuid uuid}))
+         ))
+     ))
+ )
 
 (defn get-preferences
   "Fetch preferences for logged in user"
@@ -129,8 +134,10 @@
   (try
     (let [request-body (:body
                          request)
-          language (:language request-body)
-          language-name (:language-name request-body)]
+          language (or (:language request-body)
+                       "english")
+          language-name (or (:language-name request-body)
+                            "English")]
       (when-let [session-cookie (:cookie request)]
         (let [preferences (get-preferences
                             session-cookie

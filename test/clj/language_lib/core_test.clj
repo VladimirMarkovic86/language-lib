@@ -24,7 +24,30 @@
        :serbian "Српски превод" }
      { :code 2
        :english "English translation"
-       :serbian "Српски превод" }]))
+       :serbian "Српски превод" }])
+  (mon/mongodb-insert-many
+    "user"
+    [{ :username "test-user"
+	      :email "234@234" }])
+	 (let [user-db-obj (mon/mongodb-find-one
+	                     "user"
+	                     {:username "test-user"})
+	       _id (:_id user-db-obj)]
+	   (mon/mongodb-insert-many
+      "session"
+      [{:uuid "test-uuid"
+        :user-agent "Test browser"
+        :user-id _id
+        :username "admin"
+        :created-at (java.util.Date.)}
+       ])
+    (mon/mongodb-insert-many
+      "preferences"
+      [{:user-id _id
+        :language "english"
+        :language-name "English"}
+       ])
+   ))
 
 (defn destroy-db
   "Destroy testing database"
@@ -41,6 +64,144 @@
   (destroy-db))
 
 (use-fixtures :each before-and-after-tests)
+
+(deftest test-get-user-id-by-session
+  (testing "Test get user id by session"
+    
+    (let [session-cookie nil
+          session-type nil
+          result (get-user-id-by-session
+                   session-cookie
+                   session-type)]
+      
+      (is
+        (nil?
+          result)
+       )
+      
+     )
+    
+    (let [session-cookie "session=test-uuid"
+          session-type :session
+          result (get-user-id-by-session
+                   session-cookie
+                   session-type)]
+      
+      (let [user-db-obj (mon/mongodb-find-one
+	                         "user"
+	                         {:username "test-user"})
+	           _id (:_id user-db-obj)]
+	       
+	       (is
+          (= result
+             _id)
+         )
+         
+       )
+      
+     )
+    
+   ))
+
+(deftest test-get-preferences
+  (testing "Test get preferences"
+    
+    (let [session-cookie nil
+          session-type nil
+          result (get-preferences
+                   session-cookie
+                   session-type)]
+      
+      (is
+        (nil?
+          result)
+       )
+      
+     )
+    
+    (let [session-cookie "session=test-uuid"
+          session-type :session
+          result (get-preferences
+                   session-cookie
+                   session-type)]
+      
+      (let [user-db-obj (mon/mongodb-find-one
+	                         "user"
+	                         {:username "test-user"})
+	           _id (:_id user-db-obj)]
+	       
+	       (is
+          (= (:user-id result)
+             _id)
+         )
+	       
+	       (is
+          (= (:language result)
+             "english")
+         )
+	       
+	       (is
+          (= (:language-name result)
+             "English")
+         )
+         
+       )
+      
+     )
+    
+   ))
+
+(deftest test-get-labels
+  (testing "Test get labels"
+    
+    (let [request nil
+          result (get-labels
+                   request)
+          [{element-1-code :code
+            element-1-english :english}
+           {element-2-code :code
+            element-2-english :english}] (get-in
+                                           result
+                                           [:body
+                                            :data])
+          result (update-in
+                   result
+                   [:body]
+                   dissoc
+                   :data)]
+      
+      (is
+        (= result
+           {:status 200
+            :headers {"Content-Type" "text/clojurescript"}
+            :body {:status "success"
+                   :language "english"}})
+       )
+      
+      (is
+        (= element-1-code
+           1.0)
+       )
+      
+      (is
+        (= element-1-english
+           "English translation")
+       )
+      
+      (is
+        (= element-2-code
+           2.0)
+       )
+      
+      (is
+        (= element-2-english
+           "English translation")
+       )
+      
+      
+     )
+    
+   ))
 
 (deftest test-get-label
   (testing "Test get label"
@@ -65,8 +226,8 @@
                    label-language)]
       
       (is
-        (nil?
-          result)
+        (= result
+           "0")
        )
       
      )
@@ -144,3 +305,80 @@
      )
     
    ))
+
+(deftest test-set-language
+  (testing "Test set language"
+    
+    (let [request nil
+          result (set-language
+                   request)]
+      
+      (is
+        (= result
+           {:status 200
+            :headers {"Content-Type" "text/clojurescript"}
+            :body {:status "success"}})
+       )
+      
+     )
+    
+    (let [request {:cookie "session=test-uuid"}
+          result (set-language
+                   request)
+          session-cookie "session=test-uuid"
+          session-type :session
+          preferences-result (get-preferences
+                               session-cookie
+                               session-type)]
+      
+      (is
+        (= result
+           {:status 200
+            :headers {"Content-Type" "text/clojurescript"}
+            :body {:status "success"}})
+       )
+      
+      (is
+        (= (:language preferences-result)
+           "english")
+       )
+      
+      (is
+        (= (:language-name preferences-result)
+           "English")
+       )
+      
+     )
+    
+    (let [request {:cookie "session=test-uuid"
+                   :body {:language "serbian"
+                          :language-name "Serbian"}}
+          result (set-language
+                   request)
+          session-cookie "session=test-uuid"
+          session-type :session
+          preferences-result (get-preferences
+                               session-cookie
+                               session-type)]
+      
+      (is
+        (= result
+           {:status 200
+            :headers {"Content-Type" "text/clojurescript"}
+            :body {:status "success"}})
+       )
+      
+      (is
+        (= (:language preferences-result)
+           "serbian")
+       )
+      
+      (is
+        (= (:language-name preferences-result)
+           "Serbian")
+       )
+      
+     )
+    
+   ))
+
