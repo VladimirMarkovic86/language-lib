@@ -1,7 +1,8 @@
 (ns language-lib.core-test
   (:require [clojure.test :refer :all]
             [language-lib.core :refer :all]
-            [mongo-lib.core :as mon]))
+            [mongo-lib.core :as mon]
+            [session-lib.core :as ssn]))
 
 (def db-uri
      (or (System/getenv "MONGODB_URI")
@@ -64,92 +65,6 @@
   (destroy-db))
 
 (use-fixtures :each before-and-after-tests)
-
-(deftest test-get-user-id-by-session
-  (testing "Test get user id by session"
-    
-    (let [session-cookie nil
-          session-type nil
-          result (get-user-id-by-session
-                   session-cookie
-                   session-type)]
-      
-      (is
-        (nil?
-          result)
-       )
-      
-     )
-    
-    (let [session-cookie "session=test-uuid"
-          session-type :session
-          result (get-user-id-by-session
-                   session-cookie
-                   session-type)]
-      
-      (let [user-db-obj (mon/mongodb-find-one
-	                         "user"
-	                         {:username "test-user"})
-	           _id (:_id user-db-obj)]
-	       
-	       (is
-          (= result
-             _id)
-         )
-         
-       )
-      
-     )
-    
-   ))
-
-(deftest test-get-preferences
-  (testing "Test get preferences"
-    
-    (let [session-cookie nil
-          session-type nil
-          result (get-preferences
-                   session-cookie
-                   session-type)]
-      
-      (is
-        (nil?
-          result)
-       )
-      
-     )
-    
-    (let [session-cookie "session=test-uuid"
-          session-type :session
-          result (get-preferences
-                   session-cookie
-                   session-type)]
-      
-      (let [user-db-obj (mon/mongodb-find-one
-	                         "user"
-	                         {:username "test-user"})
-	           _id (:_id user-db-obj)]
-	       
-	       (is
-          (= (:user-id result)
-             _id)
-         )
-	       
-	       (is
-          (= (:language result)
-             "english")
-         )
-	       
-	       (is
-          (= (:language-name result)
-             "English")
-         )
-         
-       )
-      
-     )
-    
-   ))
 
 (deftest test-get-labels
   (testing "Test get labels"
@@ -315,9 +230,10 @@
       
       (is
         (= result
-           {:status 200
+           {:status 500
             :headers {"Content-Type" "text/clojurescript"}
-            :body {:status "success"}})
+            :body {:status "Error"
+                   :message "The value for key user-id can not be null"}})
        )
       
      )
@@ -325,11 +241,8 @@
     (let [request {:cookie "session=test-uuid"}
           result (set-language
                    request)
-          session-cookie "session=test-uuid"
-          session-type :session
-          preferences-result (get-preferences
-                               session-cookie
-                               session-type)]
+          preferences-result (ssn/get-preferences
+                               request)]
       
       (is
         (= result
@@ -355,11 +268,8 @@
                           :language-name "Serbian"}}
           result (set-language
                    request)
-          session-cookie "session=test-uuid"
-          session-type :session
-          preferences-result (get-preferences
-                               session-cookie
-                               session-type)]
+          preferences-result (ssn/get-preferences
+                               request)]
       
       (is
         (= result
